@@ -1,0 +1,46 @@
+name: Kopparpris
+
+on:
+  schedule:
+    # Minut 3, 13, 23 ... (undviker hela timmar/tiotal där GitHub är mest belastat)
+    - cron: "3-59/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write   # behövs för "håll schemat vid liv"-steget
+
+concurrency:
+  group: kopparpris
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Installera paket
+        run: pip install -r requirements.txt
+
+      - name: Uppdatera kopparpris i Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          MESSAGE_ID: ${{ vars.MESSAGE_ID }}
+          HISTORY_HOURS: ${{ vars.HISTORY_HOURS }}
+        run: python koppar_webhook.py
+
+      # GitHub stänger av schemalagda körningar i publika repon efter 60 dagar
+      # utan aktivitet. Detta steg slår på workflowet igen varje körning.
+      - name: Håll schemat vid liv
+        if: github.event_name == 'schedule'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow enable kopparpris.yml --repo "${{ github.repository }}"
