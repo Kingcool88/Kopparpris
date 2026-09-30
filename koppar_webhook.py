@@ -8,6 +8,7 @@ Kopparpris till Discord via webhook – körs av GitHub Actions var 10:e minut.
 Miljövariabler (sätts i GitHub under Settings -> Secrets and variables -> Actions):
   DISCORD_WEBHOOK_URL  (Secret)    – webhook-länken från Discord
   MESSAGE_ID           (Variable)  – ID på prismeddelandet (fås vid första manuella körningen)
+  RUN_SOURCE           (sätts av workflowet) – "cron" när cron-job.org startar körningen
   HISTORY_HOURS        (Variable)  – valfri, standard 24
 """
 
@@ -32,7 +33,10 @@ from matplotlib.ticker import FuncFormatter
 # ---------------------------------------------------------------------------
 WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL", "").strip().split("?")[0].rstrip("/")
 MESSAGE_ID = os.environ.get("MESSAGE_ID", "").strip()
-EVENT = os.environ.get("GITHUB_EVENT_NAME", "manual")
+# Automatiska körningar: GitHubs schema ("schedule") eller cron-job.org ("cron").
+# Bara MANUELLA körningar får skapa ett nytt meddelande.
+EVENT = (os.environ.get("RUN_SOURCE") or os.environ.get("GITHUB_EVENT_NAME") or "manuell").strip()
+AUTOMATIC = EVENT in ("schedule", "cron")
 HISTORY_HOURS = max(1, int(os.environ.get("HISTORY_HOURS") or 24))
 WEBHOOK_NAME = os.environ.get("WEBHOOK_NAME", "Kopparpris").strip()
 LOCAL_TZ = ZoneInfo(os.environ.get("TIMEZONE") or "Europe/Stockholm")
@@ -221,7 +225,7 @@ def main() -> int:
 
     # Utan MESSAGE_ID skapas bara ett nytt meddelande vid MANUELL körning,
     # annars skulle schemat posta ett nytt inlägg var 10:e minut.
-    if not MESSAGE_ID and EVENT == "schedule":
+    if not MESSAGE_ID and AUTOMATIC:
         gh_warning("MESSAGE_ID är inte satt – kör workflowet manuellt en gång (Run workflow).")
         return 0
 
