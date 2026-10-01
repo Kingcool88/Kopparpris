@@ -1,0 +1,61 @@
+name: Viscaria-bevakning
+
+on:
+  schedule:
+    - cron: "17 * * * *"   # varje timme, minut 17 (UTC) – reserv om cron-job.org inte används
+  workflow_dispatch:         # manuellt från Actions-fliken eller från cron-job.org
+    inputs:
+      dry_run:
+        description: "Testkörning: visa inläggen i loggen, posta och spara inget"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write            # för att kunna committa state.json
+
+concurrency:
+  group: viscaria-bevakning
+  cancel-in-progress: false
+
+jobs:
+  bevaka:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Kör bevakningen
+        env:
+          # Egen secret – DISCORD_WEBHOOK_URL används redan av kopparpriset
+          DISCORD_WEBHOOK_URL: ${{ secrets.VISCARIA_WEBHOOK_URL }}
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            python viscaria_bevakning.py --dry-run
+          else
+            python viscaria_bevakning.py
+          fi
+
+      - name: Spara state.json
+        if: always() && inputs.dry_run != true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ ! -f state.json ]; then
+            echo "Ingen state.json att spara"
+            exit 0
+          fi
+          git add state.json
+          if git diff --cached --quiet; then
+            echo "Inga ändringar i state.json"
+          else
+            git commit -m "Uppdatera state.json"
+            git pull --rebase --quiet
+            git push
+          fi
