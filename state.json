@@ -1,0 +1,285 @@
+{
+ "bgs": {
+  "arenden": {
+   "1058-2026": {
+    "ankomstDatum": "2026-05-29",
+    "beskrivning": "Överlåtelse av undersökningstillstånden Viscaria nr 107, Viscaria nr 117, Viscaria nr 118, Viscaria nr 119, Viscaria nr 120, Viscaria nr 121, Viscaria nr 122, Viscaria nr 123, Kirkkovaarti nr 1, Nihka East, Goddevarri nr 101 och Viscaria East, Kiruna kommun till Gruvaktiebolaget Viscaria.",
+    "beslutsDatum": "2026-08-14",
+    "beslutsTyp": "Avskrivet",
+    "diarienummer": "1058-2026",
+    "forst_sedd": "2026-10-01",
+    "namn": "Viscaria Kiruna AB"
+   },
+   "1144-2026": {
+    "ankomstDatum": "2026-06-12",
+    "beskrivning": "Gruvinspektion Viscaria 2026",
+    "beslutsDatum": "",
+    "beslutsTyp": "Andra typer av ärendeutgång",
+    "diarienummer": "1144-2026",
+    "forst_sedd": "2026-10-01",
+    "namn": "Viscaria Kiruna AB"
+   },
+   "1198-2026": {
+    "ankomstDatum": "2026-06-18",
+    "beskrivning": "Redovisning av undersökningsarbete inom Viscaria nr 1, Kiruna kommun",
+    "beslutsDatum": "",
+    "beslutsTyp": "",
+    "diarienummer": "1198-2026",
+    "forst_sedd": "2026-10-01",
+    "namn": "Viscaria Kiruna AB"
+   },
+   "1494-2026": {
+    "ankomstDatum": "2026-08-11",
+    "beskrivning": "Undersökningstillståndet Viscaria nr 107, Kiruna kommun har upphört",
+    "beslutsDatum": "",
+    "beslutsTyp": "Andra typer av ärendeutgång",
+    "diarienummer": "1494-2026",
+    "forst_sedd": "2026-10-01",
+    "namn": "Enligt sändlista"
+   },
+   "1496-2026": {
+    "ankomstDatum": "2026-08-11",
+    "beskrivning": "Undersökningstillstånd för Viscaria nr 124, Kiruna kommun",
+    "beslutsDatum": "",
+    "beslutsTyp": "",
+    "diarienummer": "1496-2026",
+    "forst_sedd": "2026-10-01",
+    "namn": "Viscaria Kiruna AB"
+   },
+   "1534-2026": {
+    "ankomstDatum": "2026-08-17",
+    "beskrivning": "Dispens från förbudsår för området Viscaria nr 107, Kiruna kommun",
+    "beslutsDatum": "",
+    "beslutsTyp": "",
+    "diarienummer": "1534-2026",
+    "forst_sedd": "2026-10-01",
+    "namn": "Viscaria Kiruna AB"
+   }
+  },
+  "initierad": true
+ },
+ "lst": {
+  "arenden": {
+   "10584-2026": {
+    "beslutsdatum": "2026-07-08",
+    "case_id": "5533214",
+    "datum": "2026-06-16",
+    "forst_sedd": "2026-10-01",
+    "handlingar": [
+     "10584-2026-1",
+     "10584-2026-2",
+     "10584-2026-3"
+    ],
+    "rubrik": "Planerat tillsynsbesök på Viscaria",
+    "status": "Avslutat"
+   },
+   "12411-2026": {
+    "beslutsdatum": "2026-07-24",
+    "case_id": "5565645",
+    "datum": "2026-07-17",
+    "forst_sedd": "2026-10-01",
+    "handlingar": [
+     "12411-2026-1",
+     "12411-2026-2",
+     "12411-2026-4",
+     "12411-2026-5",
+     "12411-2026-6",
+     "12411-2026-9",
+     "12411-2026-10"
+    ],
+    "rubrik": "Begäran om yttrande i mål M 2244-26 om godkännande av ekonomisk säkerhet enligt deldom i mål M 954-22 gällande gruvverksamhet m.m. vid Viscariafyndigheten, Kiruna kommun",
+    "status": "Beslutat"
+   },
+   "13381-2026": {
+    "beslutsdatum": "2026-09-18",
+    "case_id": "5581900",
+    "datum": "2026-08-11",
+    "forst_sedd": "2026-10-01",
+    "handlingar": [
+     "13381-2026-1",
+     "13381-2026-2"
+    ],
+    "rubrik": "Information om påbörjad tömning av Viscariagruvan",
+    "status": "Avslutat"
+   },
+   "14581-2026": {
+    "beslutsdatum": "",
+    "case_id": "5601253",
+    "datum": "2026-09-04",
+    "forst_sedd": "2026-10-01",
+    "handlingar": [
+     "14581-2026-1",
+     "14581-2026-2"
+    ],
+    "rubrik": "Information om byte av konstruktionsmaterial i Viscarias klarningsmagasin",
+    "status": "Handläggning"
+   },
+   "15820-2024": {
+    "beslutsdatum": "",
+    "case_id": "4932685",
+    "datum": "2024-10-31",
+    "forst_sedd": "2026-10-01",
+    "handlingar": [
+     "15820-2024-1"
+    ],
+    "rubrik": "Förslag till kontrollprogram för Viscariagruvan, Kiruna kommun",
+    "status": "Handläggning"
+   },
+   "15890-2025": {
+    "beslutsdatum": "",
+    "case_id": "5272634",
+    "datum": "2025-09-04",
+    "forst_sedd": "2026-10-01",
+    "handlingar": [
+     "15890-2025-1",
+     "15890-2025-2",
+     "15890-2025-3",
+     "15890-2025-4",
+     "15890-2025-5",
+     "15890-2025-6",
+     "15890-2025-7",
+     "15890-2025-8",
+     "15890-2025-9",
+     "15890-2025-10",
+     "15890-2025-11",
+     "15890-2025-12",
+     "15890-2025-13",
+     "15890-2025-14",
+     "15890-2025-15",
+     "15890-2025-16",
+     "15890-2025-17",
+     "15890-2025-18",
+     "15890-2025-19",
+     "15890-2025-20",
+     "15890-2025-21",
+     "15890-2025-22",
+     "15890-2025-23",
+     "15890-2025-24"
+    ],
+    "rubrik": "Begäran om yttrande över ansökan om tillstånd enligt miljöbalken till gruvverksamhet m.m. vid Viscariafyndigheten, Kiruna kommun 954-22",
+    "status": "Handläggning"
+   },
+   "2034-2026": {
+    "beslutsdatum": "2026-09-21",
+    "case_id": "5390828",
+    "datum": "2026-02-04",
+    "forst_sedd": "2026-10-01",
+    "handlingar": [
+     "2034-2026-1",
+     "2034-2026-2",
+     "2034-2026-3",
+     "2034-2026-4"
+    ],
+    "rubrik": "Information om bottentätning av VIscaria klarningsmagasin",
+    "status": "Avslutat"
+   },
+   "3567-2026": {
+    "beslutsdatum": "",
+    "case_id": "5420449",
+    "datum": "2026-03-03",
+    "forst_sedd": "2026-10-01",
+    "handlingar": [
+     "3567-2026-1"
+    ],
+    "rubrik": "Arbetsplan för bearbetningskoncessionerna Viscaria K nr 3, 4 och 7, Kiruna kommun",
+    "status": "Handläggning"
+   },
+   "4209-2026": {
+    "beslutsdatum": "",
+    "case_id": "5430596",
+    "datum": "2026-03-16",
+    "forst_sedd": "2026-10-01",
+    "handlingar": [
+     "4209-2026-1",
+     "4209-2026-2",
+     "4209-2026-3",
+     "4209-2026-4"
+    ],
+    "rubrik": "Miljörapport för år 2025, 2584-114, Viscaria - Viscariagruvan efterbeh",
+    "status": "Handläggning"
+   },
+   "4505-2026": {
+    "beslutsdatum": "",
+    "case_id": "5435019",
+    "datum": "2026-03-17",
+    "forst_sedd": "2026-10-01",
+    "handlingar": [
+     "4505-2026-1"
+    ],
+    "rubrik": "Säkerhetsrapport för Sevesoverksamheten på Viscariagruvan",
+    "status": "Handläggning"
+   },
+   "5295-2026": {
+    "beslutsdatum": "",
+    "case_id": "5450225",
+    "datum": "2026-03-31",
+    "forst_sedd": "2026-10-01",
+    "handlingar": [
+     "5295-2026-1",
+     "5295-2026-2",
+     "5295-2026-3",
+     "5295-2026-4",
+     "5295-2026-5",
+     "5295-2026-6"
+    ],
+    "rubrik": "Miljörapport för år 2025, 2584-115, Viscaria Kiruna",
+    "status": "Handläggning"
+   },
+   "7148-2026": {
+    "beslutsdatum": "2026-06-16",
+    "case_id": "5479010",
+    "datum": "2026-04-27",
+    "forst_sedd": "2026-10-01",
+    "handlingar": [
+     "7148-2026-1",
+     "7148-2026-2"
+    ],
+    "rubrik": "Säkerhet för Viscariafyndigheten, Kiruna kommun",
+    "status": "Avslutat"
+   },
+   "7718-2026": {
+    "beslutsdatum": "",
+    "case_id": "5487631",
+    "datum": "2026-05-02",
+    "forst_sedd": "2026-10-01",
+    "handlingar": [
+     "7718-2026-1",
+     "7718-2026-2",
+     "7718-2026-3",
+     "7718-2026-4"
+    ],
+    "rubrik": "Anmälan om avhjälpandeåtgärder avseende förorenat område mellan gamla sandmagasinet och tidigare och tillkommande industriområde vid Viscariagruvan, Kiruna kommun",
+    "status": "Handläggning"
+   },
+   "8119-2026": {
+    "beslutsdatum": "2026-06-23",
+    "case_id": "5493264",
+    "datum": "2026-05-10",
+    "forst_sedd": "2026-10-01",
+    "handlingar": [
+     "8119-2026-1",
+     "8119-2026-2",
+     "8119-2026-3",
+     "8119-2026-4"
+    ],
+    "rubrik": "Förfrågan om ändring av avtal för upplåtelse av nyttjanderätt enligt 32 § rennäringslagen av Viscariagruvan, Kiruna kommun",
+    "status": "Avslutat"
+   },
+   "9078-2026": {
+    "beslutsdatum": "2026-09-08",
+    "case_id": "5507085",
+    "datum": "2026-05-26",
+    "forst_sedd": "2026-10-01",
+    "handlingar": [
+     "9078-2026-1",
+     "9078-2026-2"
+    ],
+    "rubrik": "Anmälan om start av gruvdrift inom bearbetningskoncession Viscaria K nr 3 och Viscaria K nr 7, Kiruna kommun",
+    "status": "Avslutat"
+   }
+  },
+  "initierad": true
+ },
+ "senast_kontrollerad": "2026-10-01",
+ "version": 1
+}
