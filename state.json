@@ -54,6 +54,15 @@
     "diarienummer": "1534-2026",
     "forst_sedd": "2026-10-01",
     "namn": "Viscaria Kiruna AB"
+   },
+   "1779-2026": {
+    "ankomstDatum": "2026-10-05",
+    "beskrivning": "Arbetsplan för undersökningsarbete inom undersökningstillstånden Viscaria nr 122 och Kirkkovaarti nr 1, Kiruna kommun",
+    "beslutsDatum": "",
+    "beslutsTyp": "Andra typer av ärendeutgång",
+    "diarienummer": "1779-2026",
+    "forst_sedd": "2026-10-06",
+    "namn": "Viscaria Kiruna AB"
    }
   },
   "initierad": true
@@ -280,6 +289,6 @@
   },
   "initierad": true
  },
- "senast_kontrollerad": "2026-10-05",
+ "senast_kontrollerad": "2026-10-06",
  "version": 1
 }
