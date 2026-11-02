@@ -63,6 +63,15 @@
     "diarienummer": "1779-2026",
     "forst_sedd": "2026-10-06",
     "namn": "Viscaria Kiruna AB"
+   },
+   "1920-2026": {
+    "ankomstDatum": "2026-10-30",
+    "beskrivning": "Förlängning av hela undersökningstillståndet Viscaria nr 119, Kiruna kommun",
+    "beslutsDatum": "",
+    "beslutsTyp": "",
+    "diarienummer": "1920-2026",
+    "forst_sedd": "2026-11-02",
+    "namn": "Viscaria Kiruna AB"
    }
   },
   "initierad": true
@@ -307,6 +316,6 @@
   },
   "initierad": true
  },
- "senast_kontrollerad": "2026-11-01",
+ "senast_kontrollerad": "2026-11-02",
  "version": 1
 }
