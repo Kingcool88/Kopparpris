@@ -72,6 +72,15 @@
     "diarienummer": "1920-2026",
     "forst_sedd": "2026-11-02",
     "namn": "Viscaria Kiruna AB"
+   },
+   "1994-2026": {
+    "ankomstDatum": "2026-11-10",
+    "beskrivning": "Redovisning av undersökningsarbete inom Viscaria nr 107, Kiruna kommun",
+    "beslutsDatum": "",
+    "beslutsTyp": "",
+    "diarienummer": "1994-2026",
+    "forst_sedd": "2026-11-11",
+    "namn": "Viscaria Kiruna AB"
    }
   },
   "initierad": true
@@ -328,6 +337,6 @@
   },
   "initierad": true
  },
- "senast_kontrollerad": "2026-11-10",
+ "senast_kontrollerad": "2026-11-11",
  "version": 1
 }
