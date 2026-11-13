@@ -200,7 +200,8 @@
      "16411-2026-2",
      "16411-2026-3",
      "16411-2026-4",
-     "16411-2026-5"
+     "16411-2026-5",
+     "16411-2026-6"
     ],
     "rubrik": "Upplysning om boende på Viscarias gruvindustriområde i Kiruna i samband med storskalig kemikaliehantering - Sevesodirektivet och miljöbalken, vattenreningsanläggning WTP 1000",
     "status": "Handläggning"
@@ -348,6 +349,6 @@
   },
   "initierad": true
  },
- "senast_kontrollerad": "2026-11-12",
+ "senast_kontrollerad": "2026-11-13",
  "version": 1
 }
