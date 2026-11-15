@@ -1,17 +1,26 @@
 name: Viscaria-bevakning
 
+# Kör två bevakningar i samma jobb:
+#   1. viscaria_bevakning.py     – Länsstyrelsen Norrbottens och Bergsstatens diarier
+#   2. finansiering_bevakning.py – Finnvera och Euler Hermes (exportkreditgarantier)
+# Startas varje timme av cron-job.org, eller manuellt från Actions-fliken.
+
 on:
   schedule:
     - cron: "17 * * * *"   # varje timme, minut 17 (UTC) – reserv om cron-job.org inte används
-  workflow_dispatch:         # manuellt från Actions-fliken eller från cron-job.org
+  workflow_dispatch:
     inputs:
       dry_run:
         description: "Testkörning: visa inläggen i loggen, posta och spara inget"
         type: boolean
         default: false
+      test_ping:
+        description: "Skicka bara ett TEST-inlägg om finansiering (pingar @everyone)"
+        type: boolean
+        default: false
 
 permissions:
-  contents: write            # för att kunna committa state.json
+  contents: write            # för att kunna committa state-filerna
 
 concurrency:
   group: viscaria-bevakning
@@ -20,9 +29,13 @@ concurrency:
 jobs:
   bevaka:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
+      # Hämta SENASTE main när jobbet startar (inte commiten från när körningen
+      # beställdes) – annars kan en köad körning se gamla state-filer och posta dubbelt.
       - uses: actions/checkout@v5
+        with:
+          ref: main
 
       - uses: actions/setup-python@v6
         with:
@@ -31,9 +44,9 @@ jobs:
 
       - run: pip install -r requirements.txt
 
-      - name: Kör bevakningen
+      - name: Diarier (Länsstyrelsen + Bergsstaten)
+        if: inputs.test_ping != true
         env:
-          # Egen secret – DISCORD_WEBHOOK_URL används redan av kopparpriset
           DISCORD_WEBHOOK_URL: ${{ secrets.VISCARIA_WEBHOOK_URL }}
         run: |
           if [ "${{ inputs.dry_run }}" = "true" ]; then
@@ -42,20 +55,33 @@ jobs:
             python viscaria_bevakning.py
           fi
 
-      - name: Spara state.json
-        if: always() && inputs.dry_run != true
+      - name: Finansiering (Finnvera + Euler Hermes)
+        if: always()
+        env:
+          # Egen kanal om FINANSIERING_WEBHOOK_URL finns, annars samma som diarierna
+          DISCORD_WEBHOOK_URL: ${{ secrets.FINANSIERING_WEBHOOK_URL || secrets.VISCARIA_WEBHOOK_URL }}
+          ALERT_MENTION: ${{ vars.ALERT_MENTION }}
+        run: |
+          if [ "${{ inputs.test_ping }}" = "true" ]; then
+            python finansiering_bevakning.py --test-ping
+          elif [ "${{ inputs.dry_run }}" = "true" ]; then
+            python finansiering_bevakning.py --dry-run
+          else
+            python finansiering_bevakning.py
+          fi
+
+      - name: Spara state-filer
+        if: always() && inputs.dry_run != true && inputs.test_ping != true
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if [ ! -f state.json ]; then
-            echo "Ingen state.json att spara"
-            exit 0
-          fi
-          git add state.json
+          for f in state.json finansiering_state.json; do
+            [ -f "$f" ] && git add "$f"
+          done
           if git diff --cached --quiet; then
-            echo "Inga ändringar i state.json"
+            echo "Inga ändringar i state-filerna"
           else
-            git commit -m "Uppdatera state.json"
+            git commit -m "Uppdatera state-filer"
             git pull --rebase --quiet
             git push
           fi
