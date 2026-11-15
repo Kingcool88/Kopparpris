@@ -383,8 +383,14 @@ def check_fin_page(old: dict, new: dict, d: Discord) -> None:
 def summary_fin_page(new: dict) -> str:
     if new["gone"]:
         return "Projektsidan svarar inte (borttagen)."
-    pub = next((l for l in new["lines"] if re.search(r"date of publication", l, re.I)), "")
-    return "Projektsidan finns." + (f" {pub}" if pub else "")
+    lines = new["lines"]
+    for i, l in enumerate(lines):
+        if re.search(r"date of publication", l, re.I):
+            # Etikett och datum kan ligga i olika element – ta då med nästa rad
+            if re.fullmatch(r"\W*date of publication\W*", l, re.I) and i + 1 < len(lines):
+                l = f"Date of publication: {lines[i + 1]}"
+            return f"Projektsidan finns. {l}"
+    return "Projektsidan finns."
 
 
 # 3) Finnvera – Newsroom ------------------------------------------------
