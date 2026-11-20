@@ -20,7 +20,7 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v5
 
@@ -36,6 +36,8 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           MESSAGE_ID: ${{ vars.MESSAGE_ID }}
+          MESSAGE_ID_WEEK: ${{ vars.MESSAGE_ID_WEEK }}
+          MESSAGE_ID_MONTH: ${{ vars.MESSAGE_ID_MONTH }}
           HISTORY_HOURS: ${{ vars.HISTORY_HOURS }}
           RUN_SOURCE: ${{ inputs.kalla }}
         run: python koppar_webhook.py
