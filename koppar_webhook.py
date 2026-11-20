@@ -2,14 +2,20 @@
 Kopparpris till Discord via webhook – körs av GitHub Actions var 10:e minut.
 
 - Hämtar kopparpris (COMEX HG=F via Yahoo Finance), räknar om USD/lb -> USD/ton.
-- Ritar graf över senaste HISTORY_HOURS timmar.
-- Redigerar ETT och samma Discord-meddelande (MESSAGE_ID) varje körning.
+- Ritar tre grafer: senaste dygnet, senaste veckan och senaste månaden.
+- Varje graf är ETT eget Discord-meddelande som redigeras vid varje körning.
 
 Miljövariabler (sätts i GitHub under Settings -> Secrets and variables -> Actions):
   DISCORD_WEBHOOK_URL  (Secret)    – webhook-länken från Discord
-  MESSAGE_ID           (Variable)  – ID på prismeddelandet (fås vid första manuella körningen)
+  MESSAGE_ID           (Variable)  – ID på dygnsgrafens meddelande
+  MESSAGE_ID_WEEK      (Variable)  – ID på veckografens meddelande
+  MESSAGE_ID_MONTH     (Variable)  – ID på månadsgrafens meddelande
   RUN_SOURCE           (sätts av workflowet) – "cron" när cron-job.org startar körningen
-  HISTORY_HOURS        (Variable)  – valfri, standard 24
+  HISTORY_HOURS        (Variable)  – valfri, dygnsgrafens längd i timmar, standard 24
+
+Saknas ett MESSAGE_ID skapas det meddelandet vid nästa MANUELLA körning
+(Run workflow), och ID:t visas överst på körningens sida i GitHub.
+Automatiska körningar skapar aldrig nya meddelanden – de uppdaterar bara de som finns.
 """
 
 import io
@@ -32,9 +38,8 @@ from matplotlib.ticker import FuncFormatter
 # Inställningar
 # ---------------------------------------------------------------------------
 WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL", "").strip().split("?")[0].rstrip("/")
-MESSAGE_ID = os.environ.get("MESSAGE_ID", "").strip()
 # Automatiska körningar: GitHubs schema ("schedule") eller cron-job.org ("cron").
-# Bara MANUELLA körningar får skapa ett nytt meddelande.
+# Bara MANUELLA körningar får skapa nya meddelanden.
 EVENT = (os.environ.get("RUN_SOURCE") or os.environ.get("GITHUB_EVENT_NAME") or "manuell").strip()
 AUTOMATIC = EVENT in ("schedule", "cron")
 HISTORY_HOURS = max(1, int(os.environ.get("HISTORY_HOURS") or 24))
@@ -49,6 +54,45 @@ USER_AGENT = (
     "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 )
 STALE_MINUTES = 30
+
+VECKODAGAR = ["mån", "tis", "ons", "tors", "fre", "lör", "sön"]
+MANADER = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"]
+
+# De tre graferna, i den ordning de skapas (och ligger) i kanalen.
+#   interval/range: vad som hämtas från Yahoo
+#   hours:          hur långt bakåt grafen visar, räknat från senaste noteringen
+PERIODS = [
+    {
+        "key": "dag",
+        "var": "MESSAGE_ID",
+        "label": f"senaste {HISTORY_HOURS} h" if HISTORY_HOURS != 24 else "senaste dygnet",
+        "hours": HISTORY_HOURS,
+        "interval": "5m",
+        "range": "5d" if HISTORY_HOURS <= 96 else "1mo",
+        "axis": "tid",
+    },
+    {
+        "key": "vecka",
+        "var": "MESSAGE_ID_WEEK",
+        "label": "senaste veckan",
+        "hours": 7 * 24,
+        "interval": "30m",
+        "range": "1mo",
+        "axis": "veckodag",
+    },
+    {
+        "key": "manad",
+        "var": "MESSAGE_ID_MONTH",
+        "label": "senaste månaden",
+        "hours": 30 * 24,
+        "interval": "60m",
+        "range": "3mo",
+        "axis": "datum",
+    },
+]
+for _p in PERIODS:
+    _p["message_id"] = os.environ.get(_p["var"], "").strip()
+    _p["filename"] = f"koppar_{_p['key']}.png"
 
 
 def gh_notice(text: str) -> None:
@@ -73,8 +117,8 @@ def fmt(value: float, decimals: int = 0) -> str:
 # ---------------------------------------------------------------------------
 # Hämta pris
 # ---------------------------------------------------------------------------
-def fetch_copper() -> dict:
-    params = {"interval": "5m", "range": "5d", "includePrePost": "false"}
+def fetch_copper(interval: str, rng: str, hours: int) -> dict:
+    params = {"interval": interval, "range": rng, "includePrePost": "false"}
     headers = {"User-Agent": USER_AGENT}
     last_err = "okänt fel"
 
@@ -101,7 +145,7 @@ def fetch_copper() -> dict:
                     last_err = f"Ingen prisdata från {host}"
                     continue
 
-                cutoff = points[-1][0] - timedelta(hours=HISTORY_HOURS)
+                cutoff = points[-1][0] - timedelta(hours=hours)
                 points = [p for p in points if p[0] >= cutoff]
 
                 price_lb = meta.get("regularMarketPrice")
@@ -122,7 +166,27 @@ def fetch_copper() -> dict:
 # ---------------------------------------------------------------------------
 # Graf + embed
 # ---------------------------------------------------------------------------
-def build_chart(points: list, up: bool) -> bytes:
+def _day_label(d: datetime, kind: str) -> str:
+    if kind == "veckodag":
+        return f"{VECKODAGAR[d.weekday()]} {d.day}/{d.month}"
+    return f"{d.day} {MANADER[d.month - 1]}"
+
+
+def _trading_day_ticks(times: list, kind: str, max_ticks: int = 7) -> tuple[list, list]:
+    """Positioner + etiketter vid första noteringen varje handelsdag."""
+    starts = [i for i, t in enumerate(times) if i == 0 or t.date() != times[i - 1].date()]
+    # Minsta avstånd mellan etiketter, så att korta dagar (t.ex. en bit fredag
+    # längst till vänster) inte ger etiketter ovanpå varandra
+    min_gap = len(times) / (max_ticks + 1)
+    kept: list = []
+    for i in reversed(starts):                       # nyaste dagarna prioriteras
+        if not kept or kept[-1] - i >= min_gap:
+            kept.append(i)
+    kept.reverse()
+    return kept, [_day_label(times[i], kind) for i in kept]
+
+
+def build_chart(points: list, up: bool, period: dict) -> bytes:
     times = [t.astimezone(LOCAL_TZ) for t, _ in points]
     vals = [v for _, v in points]
 
@@ -134,11 +198,23 @@ def build_chart(points: list, up: bool) -> bytes:
     fig.patch.set_facecolor(bg)
     ax.set_facecolor(bg)
 
-    ax.plot(times, vals, color=color, linewidth=2)
-    ax.fill_between(times, vals, min(vals), color=color, alpha=0.15)
-    ax.scatter([times[-1]], [vals[-1]], color=color, s=25, zorder=3)
+    if period["axis"] == "tid":
+        # Dygnsgrafen: riktig tidsaxel
+        xs = times
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M", tz=LOCAL_TZ))
+    else:
+        # Vecka/månad: en punkt per notering, så att helger och stängd börs
+        # inte ritas som långa raka streck
+        xs = list(range(len(vals)))
+        ticks, labels = _trading_day_ticks(times, period["axis"])
+        ax.set_xticks(ticks)
+        ax.set_xticklabels(labels)
+        ax.set_xlim(-0.5, len(vals) - 0.5)
 
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M", tz=LOCAL_TZ))
+    ax.plot(xs, vals, color=color, linewidth=2 if period["axis"] == "tid" else 1.6)
+    ax.fill_between(xs, vals, min(vals), color=color, alpha=0.15)
+    ax.scatter([xs[-1]], [vals[-1]], color=color, s=25, zorder=3)
+
     ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: fmt(v)))
     ax.tick_params(colors=text, labelsize=9)
     ax.grid(color="#3f4147", linewidth=0.6)
@@ -146,7 +222,7 @@ def build_chart(points: list, up: bool) -> bytes:
         spine.set_visible(False)
 
     ax.set_ylabel("USD/ton", color=text, fontsize=9)
-    ax.set_title(f"Koppar – senaste {HISTORY_HOURS} h", color="#f2f3f5", fontsize=11)
+    ax.set_title(f"Koppar – {period['label']}", color="#f2f3f5", fontsize=11)
 
     fig.tight_layout()
     buf = io.BytesIO()
@@ -155,7 +231,7 @@ def build_chart(points: list, up: bool) -> bytes:
     return buf.getvalue()
 
 
-def build_embed(data: dict) -> tuple[dict, bytes]:
+def build_embed(data: dict, period: dict) -> tuple[dict, bytes]:
     points = data["points"]
     price = data["price"]
     start = points[0][1]
@@ -181,33 +257,34 @@ def build_embed(data: dict) -> tuple[dict, bytes]:
             {"name": "⏸ Marknaden stängd", "value": f"Senaste notering {local_mt}", "inline": False}
         )
 
+    title = "Kopparpris (COMEX)" if period["key"] == "dag" else f"Kopparpris (COMEX) – {period['label']}"
     embed = {
-        "title": "Kopparpris (COMEX)",
+        "title": title,
         "description": (
             f"## {fmt(price)} USD/ton\n"
             f"{arrow} {sign}{fmt(abs(change))} USD ({sign}{fmt(abs(pct), 2)} %) "
-            f"senaste {HISTORY_HOURS} h"
+            f"{period['label']}"
         ),
         "color": 0x57F287 if up else 0xED4245,
         "fields": fields,
-        "image": {"url": "attachment://koppar.png"},
+        "image": {"url": f"attachment://{period['filename']}"},
         "footer": {"text": "Uppdateras ca var 10:e minut • Källa: Yahoo Finance (~10 min fördröjt)"},
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
-    return embed, build_chart(points, up)
+    return embed, build_chart(points, up, period)
 
 
 # ---------------------------------------------------------------------------
 # Discord
 # ---------------------------------------------------------------------------
-def discord_request(method: str, url: str, payload: dict, png: bytes) -> requests.Response:
+def discord_request(method: str, url: str, payload: dict, png: bytes, filename: str) -> requests.Response:
     """Skickar multipart (embed + bild). Hanterar Discords rate limit."""
     for _ in range(3):
         r = requests.request(
             method,
             url,
             data={"payload_json": json.dumps(payload)},
-            files={"files[0]": ("koppar.png", png, "image/png")},
+            files={"files[0]": (filename, png, "image/png")},
             timeout=30,
         )
         if r.status_code == 429:
@@ -218,64 +295,81 @@ def discord_request(method: str, url: str, payload: dict, png: bytes) -> request
     return r
 
 
+def update_period(period: dict, created: list) -> bool:
+    """Uppdaterar (eller skapar) en grafs meddelande. Returnerar False vid fel."""
+    name = period["label"]
+    msg_id = period["message_id"]
+
+    # Utan ID skapas meddelandet bara vid MANUELL körning,
+    # annars skulle schemat posta ett nytt inlägg var 10:e minut.
+    if not msg_id and AUTOMATIC:
+        gh_warning(f"{period['var']} är inte satt ({name}) – kör workflowet manuellt en gång (Run workflow).")
+        return True
+
+    try:
+        data = fetch_copper(period["interval"], period["range"], period["hours"])
+    except Exception as exc:
+        # Inget fel: inlägget ligger kvar med förra priset och tidsstämpeln
+        # visar hur gammalt det är. Undviker felmejl från GitHub vid tillfälliga avbrott.
+        gh_warning(f"Kunde inte hämta kopparpris för {name} denna gång: {exc}")
+        return True
+
+    embed, png = build_embed(data, period)
+    payload = {
+        "embeds": [embed],
+        "attachments": [{"id": 0, "filename": period["filename"]}],
+        "allowed_mentions": {"parse": []},
+    }
+
+    if msg_id:
+        r = discord_request("PATCH", f"{WEBHOOK_URL}/messages/{msg_id}", payload, png, period["filename"])
+        if r.status_code == 404:
+            gh_error(
+                f"Meddelandet för {name} finns inte längre (raderat?). Töm variabeln "
+                f"{period['var']} och kör workflowet manuellt för att skapa ett nytt."
+            )
+            return False
+        if not r.ok:
+            gh_error(f"Discord svarade {r.status_code} för {name}: {r.text[:300]}")
+            return False
+        print(f"Uppdaterat ({name}): {fmt(data['price'])} USD/ton")
+        return True
+
+    # Manuell körning utan ID: skapa meddelandet
+    if WEBHOOK_NAME:
+        payload["username"] = WEBHOOK_NAME
+    r = discord_request("POST", f"{WEBHOOK_URL}?wait=true", payload, png, period["filename"])
+    if not r.ok:
+        gh_error(f"Discord svarade {r.status_code} för {name}: {r.text[:300]}")
+        return False
+
+    new_id = r.json()["id"]
+    created.append((period["var"], name, new_id))
+    gh_notice(f"Nytt meddelande för {name} skapat. Lägg in variabeln {period['var']} = {new_id}")
+    return True
+
+
 def main() -> int:
     if not WEBHOOK_URL.startswith("https://") or "/api/webhooks/" not in WEBHOOK_URL:
         gh_error("DISCORD_WEBHOOK_URL saknas eller är felaktig (lägg in den som Secret).")
         return 1
 
-    # Utan MESSAGE_ID skapas bara ett nytt meddelande vid MANUELL körning,
-    # annars skulle schemat posta ett nytt inlägg var 10:e minut.
-    if not MESSAGE_ID and AUTOMATIC:
-        gh_warning("MESSAGE_ID är inte satt – kör workflowet manuellt en gång (Run workflow).")
-        return 0
+    created: list = []
+    ok = True
+    for i, period in enumerate(PERIODS):
+        if i:
+            time.sleep(1)  # snällt mot både Yahoo och Discord
+        ok = update_period(period, created) and ok
 
-    try:
-        data = fetch_copper()
-    except Exception as exc:
-        # Avsluta utan fel: inlägget ligger kvar med förra priset och tidsstämpeln
-        # visar hur gammalt det är. Undviker felmejl från GitHub vid tillfälliga avbrott.
-        gh_warning(f"Kunde inte hämta kopparpris denna gång: {exc}")
-        return 0
-
-    embed, png = build_embed(data)
-    payload = {
-        "embeds": [embed],
-        "attachments": [{"id": 0, "filename": "koppar.png"}],
-        "allowed_mentions": {"parse": []},
-    }
-
-    if MESSAGE_ID:
-        r = discord_request("PATCH", f"{WEBHOOK_URL}/messages/{MESSAGE_ID}", payload, png)
-        if r.status_code == 404:
-            gh_error(
-                "Prismeddelandet finns inte längre (raderat?). Töm variabeln MESSAGE_ID "
-                "och kör workflowet manuellt för att skapa ett nytt."
-            )
-            return 1
-        if not r.ok:
-            gh_error(f"Discord svarade {r.status_code}: {r.text[:300]}")
-            return 1
-        print(f"Uppdaterat: {fmt(data['price'])} USD/ton")
-        return 0
-
-    # Första körningen (manuell): skapa meddelandet
-    if WEBHOOK_NAME:
-        payload["username"] = WEBHOOK_NAME
-    r = discord_request("POST", f"{WEBHOOK_URL}?wait=true", payload, png)
-    if not r.ok:
-        gh_error(f"Discord svarade {r.status_code}: {r.text[:300]}")
-        return 1
-
-    new_id = r.json()["id"]
-    gh_notice(f"Nytt prismeddelande skapat. Lägg in variabeln MESSAGE_ID = {new_id}")
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
-    if summary:
+    if created and summary:
         with open(summary, "a", encoding="utf-8") as f:
-            f.write(
-                "## Prismeddelandet är skapat\n\n"
-                f"Lägg in detta som **Variable** med namnet `MESSAGE_ID`:\n\n```\n{new_id}\n```\n"
-            )
-    return 0
+            f.write("## Nya prismeddelanden skapade\n\n"
+                    "Lägg in dessa som **Variables** (Settings → Secrets and variables → "
+                    "Actions → Variables):\n\n| Namn | Graf | Värde |\n|---|---|---|\n")
+            for var, name, new_id in created:
+                f.write(f"| `{var}` | {name} | `{new_id}` |\n")
+    return 0 if ok else 1
 
 
 if __name__ == "__main__":
