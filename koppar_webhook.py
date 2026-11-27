@@ -148,13 +148,23 @@ def fetch_copper(interval: str, rng: str, hours: int) -> dict:
                 cutoff = points[-1][0] - timedelta(hours=hours)
                 points = [p for p in points if p[0] >= cutoff]
 
-                price_lb = meta.get("regularMarketPrice")
-                price = price_lb * LB_PER_TON if price_lb else points[-1][1]
+                # Pris och tid tas från SENASTE PUNKTEN i kursserien, så att rubrikpris,
+                # graf, högsta/lägsta och förändring alltid hänger ihop. Yahoos separata
+                # fält "regularMarketPrice" kan visa något annat (t.ex. vid kontraktsbyte
+                # eller helgdagar) – det loggas bara som varning.
+                price = points[-1][1]
+                market_time = points[-1][0]
 
-                mt = meta.get("regularMarketTime")
-                market_time = (
-                    datetime.fromtimestamp(mt, tz=timezone.utc) if mt else points[-1][0]
-                )
+                price_lb = meta.get("regularMarketPrice")
+                if price_lb:
+                    meta_price = price_lb * LB_PER_TON
+                    diff = abs(meta_price - price) / price * 100
+                    if diff > 1.0:
+                        gh_warning(
+                            f"Yahoo-fältet regularMarketPrice ({fmt(meta_price)} $/t) skiljer sig "
+                            f"{fmt(diff, 1)} % från senaste noteringen i kursserien "
+                            f"({fmt(price)} $/t) – kursserien används ({interval})."
+                        )
                 return {"price": price, "points": points, "market_time": market_time}
             except Exception as exc:
                 last_err = f"{host}: {exc}"
